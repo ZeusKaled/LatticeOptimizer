@@ -8,13 +8,14 @@ sys.path.append(os.path.join(os.path.dirname(__file__), 'src'))
 # IMPORTAR MÓDULOS
 from io_loader import cargar_segmentacion
 from grid_generator import generar_grilla_candidatos
-from optimizer import optimizador_greedy          # <--- NUEVO
+from optimizer import optimizador_greedy
+from visualizer import visualizar_lattice  # <--- NUEVO
 
 def crear_gtv_dummy(ruta_salida):
     """Crea un cubo simple de prueba."""
     print("[SETUP] Creando GTV sintético de prueba...")
     arr = np.zeros((100, 100, 100), dtype=np.uint8)
-    arr[30:70, 30:70, 30:70] = 1 # Tumor de 40mm x 40mm x 40mm
+    arr[30:70, 30:70, 30:70] = 1 
     img = sitk.GetImageFromArray(arr)
     img.SetSpacing((1.0, 1.0, 1.0))
     sitk.WriteImage(img, ruta_salida)
@@ -31,19 +32,19 @@ def main():
     
     if datos:
         # 2. Generar Candidatos
-        # Usamos paso pequeño (2mm) para tener más opciones de dónde elegir
         candidatos = generar_grilla_candidatos(datos, paso_mm=2.0)
         
-        # 3. Optimizar (Seleccionar esferas)
-        # Pedimos 10 esferas, separadas al menos 15mm entre sí
+        # 3. Optimizar
+        # Probaremos con radio de esfera 5mm (visual)
         esferas_finales = optimizador_greedy(candidatos, num_esferas=10, distancia_min_mm=15.0)
         
-        # RESULTADOS
-        print("\n[REPORTE FINAL]")
-        print(f" -> Candidatos totales evaluados: {len(candidatos)}")
-        print(f" -> Vértices Lattice colocados: {len(esferas_finales)}")
-        print(" -> Coordenadas (x, y, z):")
-        print(esferas_finales)
+        print(f"\n[RESULTADO] Se colocaron {len(esferas_finales)} esferas.")
+        
+        # 4. Visualizar (NUEVO)
+        if len(esferas_finales) > 0:
+            visualizar_lattice(candidatos, esferas_finales, radio_esfera=5.0)
+        else:
+            print("No hay esferas para visualizar.")
 
 if __name__ == "__main__":
     main()
