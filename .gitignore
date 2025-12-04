@@ -1,0 +1,16 @@
+# Ignorar carpetas de datos médicos (Privacidad y peso)
+data/
+output/
+
+# Ignorar entorno virtual de Python
+venv/
+env/
+.env
+
+# Ignorar archivos compilados de Python (basura automática)
+__pycache__/
+*.pyc
+
+# Ignorar archivos del sistema operativo
+.DS_Store
+Thumbs.db
