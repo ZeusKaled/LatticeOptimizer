@@ -1,39 +1,31 @@
 import pyvista as pv
 import numpy as np
 
-def visualizar_lattice(candidatos, esferas, radio_esfera=3.0):
-    """
-    Genera una visualización 3D interactiva.
+def visualizar_lattice_control(esferas, cilindros_control, radio_esfera=3.0, radio_cilindro=1.5):
+    print("--- Visualización: Rojo=Target | Verde=Control de Dosis (Valle) ---")
     
-    Args:
-        candidatos (np.array): Todos los puntos posibles (dibujará el GTV como una nube fantasma).
-        esferas (np.array): Las coordenadas (x,y,z) seleccionadas por el optimizador.
-        radio_esfera (float): Radio visual de las esferas Lattice (en mm).
-    """
-    print("--- Iniciando visualización 3D con PyVista ---")
-    
-    # 1. Crear el escenario (Plotter)
     p = pv.Plotter()
-    p.set_background("black") # Fondo negro estilo radioterapia
-    
-    # 2. Dibujar el "Fantasma" del GTV (Nube de puntos)
-    # Convertimos los puntos a una nube PyVista
-    if len(candidatos) > 0:
-        nube_gtv = pv.PolyData(candidatos)
-        # Los pintamos como puntitos grises translúcidos
-        p.add_mesh(nube_gtv, color="white", opacity=0.1, point_size=2, render_points_as_spheres=True, label="GTV (Nube)")
+    p.set_background("black")
 
-    # 3. Dibujar las Esferas Lattice (Vértices)
-    for i, centro in enumerate(esferas):
-        # Crear una esfera geométrica en esa coordenada
-        esfera_geo = pv.Sphere(radius=radio_esfera, center=centro)
+    # 1. ESFERAS (Target)
+    if len(esferas) > 0:
+        nube = pv.PolyData(esferas)
+        # Agregamos orient=False para evitar el Warning de PyVista
+        glyphs = nube.glyph(scale=False, geom=pv.Sphere(radius=radio_esfera), orient=False)
+        p.add_mesh(glyphs, color="red", opacity=1.0, label="GTV_Lattice (High Dose)")
+
+    # 2. CILINDROS (Control/Avoidance)
+    if len(cilindros_control) > 0:
+        print(f" -> Renderizando {len(cilindros_control)} cilindros de control...")
+        bloque_cilindros = pv.MultiBlock()
         
-        # Añadir al escenario (Color Rojo Lattice)
-        p.add_mesh(esfera_geo, color="red", opacity=0.9, smooth_shading=True)
+        for p1, p2 in cilindros_control:
+            linea = pv.Line(p1, p2)
+            tubo = linea.tube(radius=radio_cilindro)
+            bloque_cilindros.append(tubo)
+            
+        p.add_mesh(bloque_cilindros, color="springgreen", opacity=0.5, label="Valley_Control")
 
-    # 4. Añadir ejes y leyenda
     p.add_axes()
-    p.add_text("Lattice Optimizer - Vista Previa", position='upper_left', font_size=10)
-    
-    print(" -> Abriendo ventana 3D... (Interactúa con el mouse)")
+    p.add_legend()
     p.show()
